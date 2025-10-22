@@ -1,0 +1,162 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("MONGODB_URI")
+}
+
+model User {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  name     String
+  email    String @unique()
+  code     String @unique()
+  role     String
+  password String
+  status   Int
+
+  createdBy String?  @db.ObjectId
+  updatedBy String?  @db.ObjectId
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, role], name: "idx_user_status_role")
+}
+
+model Docter {
+  id              String  @id @default(auto()) @map("_id") @db.ObjectId
+  title           String
+  name            String
+  speciality      String
+  branch          String
+  image           String
+  code            String
+  order           Int     @default(0)
+  phone           String
+  mobile          String
+  address1        String
+  address2        String
+  city            String
+  regNumber       String
+  qualification   String
+  referralCharge  Int
+  sessionNoPrefix String
+  featured        Boolean @default(false)
+  laboratory      Boolean @default(false)
+  visibility      Boolean @default(false)
+  advanceBooking  Boolean @default(false)
+
+  createdBy String?  @db.ObjectId
+  updatedBy String?  @db.ObjectId
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Menu {
+  id         String  @id @default(auto()) @map("_id") @db.ObjectId
+  name       String
+  visibility Boolean @default(false)
+  order      Int     @default(0)
+
+  items MenuItem[] @relation("MenuToMenuItem")
+
+  createdBy String?  @db.ObjectId
+  updatedBy String?  @db.ObjectId
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model MenuItem {
+  id      String  @id @default(auto()) @map("_id") @db.ObjectId
+  title   String
+  url     String
+  order   Int     @default(0)
+  visible Boolean @default(true)
+
+  // 🔗 Link to Menu
+  menuId String? @db.ObjectId
+  menu   Menu?   @relation("MenuToMenuItem", fields: [menuId], references: [id])
+
+  // 🔁 Self relation (parent-child)
+  parentId String?    @db.ObjectId
+  parent   MenuItem?  @relation("SubMenuRelation", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  children MenuItem[] @relation("SubMenuRelation")
+
+  createdBy String?  @db.ObjectId
+  createdAt DateTime @default(now())
+  updatedBy String?  @db.ObjectId
+  updatedAt DateTime @updatedAt
+}
+
+model Career {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  name            String   @default("")
+  slug            String   @unique
+  short_desc      String   @default("")
+  ref_no          String   @unique
+  description     String   @default("")
+  image           String?  @default("")
+  visibility      Boolean  @default(false)
+  order           Int      @default(0)
+  no_of_vacancies Int      @default(0)
+  from_date       DateTime
+  to_date         DateTime
+  checklist       Json?
+
+  createdBy String?  @db.ObjectId
+  updatedBy String?  @db.ObjectId
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  applications CareerApplication[]
+
+  @@index([from_date], name: "idx_career_from_date")
+  @@index([to_date], name: "idx_career_to_date")
+  @@index([visibility, order], name: "idx_career_visibility_order")
+}
+
+model CareerApplication {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  careerId String @db.ObjectId
+  career   Career @relation(fields: [careerId], references: [id])
+
+  full_name     String @default("")
+  email         String @default("")
+  mobile_number String @default("")
+  resume        String @default("")
+  status        Int    @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([careerId], name: "idx_career_app_career")
+  @@index([email], name: "idx_career_app_email")
+  @@index([status], name: "idx_career_app_status")
+  @@index([createdAt], name: "idx_career_app_created_at")
+}
+
+model NtsApplication {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  title         String   @default("")
+  full_name     String   @default("")
+  date_of_birth DateTime
+  age           Int
+  gender        String   @default("")
+  address1      String
+  address2      String?
+  phone         String
+  nic           String
+  email         String   @unique()
+  status        Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
